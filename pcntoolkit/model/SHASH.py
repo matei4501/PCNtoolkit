@@ -23,20 +23,14 @@ See: Jones et al. (2009), Sinh-Arcsinh distributions.
 """
 
 
-def numpy_P(q):
+def K(p, x):
     """
-    The P function as given in Jones et al.
-    :param q:
-    :return:
+    Modified Bessel function of the second kind, scipy implementation
     """
-    frac = np.exp(1.0 / 4.0) / np.power(8.0 * np.pi, 1.0 / 2.0)
-    K1 = numpy_K((q + 1) / 2, 1.0 / 4.0)
-    K2 = numpy_K((q - 1) / 2, 1.0 / 4.0)
-    a = (K1 + K2) * frac
-    return a
+    return spp.kv(p, x)
 
 
-def numpy_K(p, x):
+def unique_K(p, x):
     """
     Computes the values of spp.kv(p,x) for only the unique values of p
     """
@@ -59,22 +53,17 @@ class K(Op):
 
     def perform(self, node, inputs_storage, output_storage):
         # Doing this on the unique values avoids doing A LOT OF double work, apparently scipy doesn't do this by itself
+        p = inputs_storage[0]
+        x = inputs_storage[1]
+        output_storage[0][0] = unique_K(p, x)
 
-        unique_inputs, inverse_indices = np.unique(
-            inputs_storage[0], return_inverse=True
-        )
-        unique_outputs = spp.kv(unique_inputs, inputs_storage[1])
-        outputs = unique_outputs[inverse_indices].reshape(
-            inputs_storage[0].shape)
-        output_storage[0][0] = outputs
-
-    def grad(self, inputs, output_grads):
-        # Approximation of the derivative. This should suffice for using NUTS
-        dp = 1e-10
-        p = inputs[0]
-        x = inputs[1]
-        grad = (self(p + dp, x) - self(p, x)) / dp
-        return [output_grads[0] * grad, grad_not_implemented(0, 1, 2, 3)]
+    # def grad(self, inputs, output_grads):
+    #     # Approximation of the derivative. This should suffice for using NUTS
+    #     dp = 1e-10
+    #     p = inputs[0]
+    #     x = inputs[1]
+    #     grad = (unique_K(p + dp, x) - unique_K(p, x)) / dp
+    #     return [output_grads[0] * grad, grad_not_implemented('K', 1, 2, 3)]
 
 
 def S(x, epsilon, delta):
@@ -104,13 +93,13 @@ def C(x, epsilon, delta):
 
 def P(q):
     """
-    The P function as given in Jones et al.
+    P function as given in Jones et al.
     :param q:
     :return:
     """
     frac = np.exp(1.0 / 4.0) / np.power(8.0 * np.pi, 1.0 / 2.0)
-    K1 = K()((q + 1) / 2, 1.0 / 4.0)
-    K2 = K()((q - 1) / 2, 1.0 / 4.0)
+    K1 = K((q + 1) / 2, 1.0 / 4.0)
+    K2 = K((q - 1) / 2, 1.0 / 4.0)
     a = (K1 + K2) * frac
     return a
 
@@ -184,8 +173,7 @@ class SHASH(Continuous):
         this_C_sqr = 1 + this_S_sqr
         frac1 = -ptt.log(ptt.constant(2 * np.pi)) / 2
         frac2 = (
-            ptt.log(delta) + ptt.log(this_C_sqr) /
-            2 - ptt.log(1 + ptt.sqr(value)) / 2
+            ptt.log(delta) + ptt.log(this_C_sqr) / 2 - ptt.log(1 + ptt.sqr(value)) / 2
         )
         exp = -this_S_sqr / 2
         return frac1 + frac2 + exp
@@ -299,8 +287,7 @@ class SHASHbRV(RandomVariable):
     ) -> np.ndarray:
         s = rng.normal(size=size)
         mean = np.sinh(epsilon / delta) * numpy_P(1 / delta)
-        var = ((np.cosh(2 * epsilon / delta) *
-               numpy_P(2 / delta) - 1) / 2) - mean**2
+        var = ((np.cosh(2 * epsilon / delta) * numpy_P(2 / delta) - 1) / 2) - mean**2
         out = (
             (np.sinh((np.arcsinh(s) + epsilon) / delta) - mean) / np.sqrt(var)
         ) * sigma + mu

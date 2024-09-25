@@ -17,6 +17,7 @@ from tkinter.font import names
 import numpy as np
 import pymc as pm
 import pytensor
+from pytensor.tensor.extra_ops import unique
 import arviz as az
 import xarray
 
@@ -99,7 +100,7 @@ def create_poly_basis(X, order):
     return Phi
 
 
-def from_posterior(param, samples, shape,  distribution=None, half=False, freedom=1):
+def from_posterior(param, samples, shape, distribution=None, half=False, freedom=1):
     """
     Create a PyMC distribution from posterior samples
 
@@ -107,7 +108,7 @@ def from_posterior(param, samples, shape,  distribution=None, half=False, freedo
     :param samples: samples from the posterior
     :param shape: shape of the parameter
     :param distribution: distribution to use for the parameter
-    :param half: if true, the distribution is assumed to be defined on the positive real line 
+    :param half: if true, the distribution is assumed to be defined on the positive real line
     :param freedom: freedom parameter for the distribution
     :return: a PyMC distribution
     """
@@ -120,8 +121,7 @@ def from_posterior(param, samples, shape,  distribution=None, half=False, freedo
             x = np.concatenate([x, [x[-1] + 0.1 * width]])
             y = np.concatenate([y, [0]])
         else:
-            x = np.concatenate(
-                [[x[0] - 0.1 * width], x, [x[-1] + 0.1 * width]])
+            x = np.concatenate([[x[0] - 0.1 * width], x, [x[-1] + 0.1 * width]])
             y = np.concatenate([[0], y, [0]])
         if shape is None:
             return pm.distributions.Interpolated(param, x, y)
@@ -214,14 +214,14 @@ def hbr(X, y, batch_effects, configs, idata=None):
     pb = ParamBuilder(X, y, batch_effects, idata, configs)
 
     def get_sample_dims(var):
-        if configs[f'random_{var}']:
-            return 'datapoints'
-        elif configs[f'random_slope_{var}']:
-            return 'datapoints'
-        elif configs[f'random_intercept_{var}']:
-            return 'datapoints'
-        elif configs[f'linear_{var}']:
-            return 'datapoints'
+        if configs[f"random_{var}"]:
+            return "datapoints"
+        elif configs[f"random_slope_{var}"]:
+            return "datapoints"
+        elif configs[f"random_intercept_{var}"]:
+            return "datapoints"
+        elif configs[f"linear_{var}"]:
+            return "datapoints"
         return None
 
     with pm.Model(coords=pb.coords) as model:
@@ -233,7 +233,7 @@ def hbr(X, y, batch_effects, configs, idata=None):
         pb.batch_effect_indices = tuple(
             [
                 pm.Data(
-                    pb.batch_effect_dim_names[i]+"_data",
+                    pb.batch_effect_dim_names[i] + "_data",
                     pb.batch_effect_indices[i],
                     mutable=True,
                     dims="datapoints",
@@ -252,17 +252,19 @@ def hbr(X, y, batch_effects, configs, idata=None):
                     mu_intercept_mu_params=(0.0, 3.0),
                     sigma_intercept_mu_params=(3.0,),
                 ).get_samples(pb),
-                dims=get_sample_dims('mu'),
+                dims=get_sample_dims("mu"),
             )
             sigma = pm.Deterministic(
                 "sigma_samples",
                 pb.make_param(
                     "sigma", mu_sigma_params=(0.0, 2.0), sigma_sigma_params=(2.0,)
                 ).get_samples(pb),
-                dims=get_sample_dims('sigma'),
+                dims=get_sample_dims("sigma"),
             )
             sigma_plus = pm.Deterministic(
-                "sigma_plus_samples", pm.math.log(1 + pm.math.exp(sigma/3))*3, dims=get_sample_dims('sigma')
+                "sigma_plus_samples",
+                pm.math.log(1 + pm.math.exp(sigma / 3)) * 3,
+                dims=get_sample_dims("sigma"),
             )
             y_like = pm.Normal(
                 "y_like", mu, sigma=sigma_plus, observed=y, dims="datapoints"
@@ -278,8 +280,7 @@ def hbr(X, y, batch_effects, configs, idata=None):
             Any mapping that is applied here after sampling should also be applied in util.hbr_utils.forward in order for the functions there to properly work.
             For example, the softplus applied to sigma here is also applied in util.hbr_utils.forward
             """
-            SHASH_map = {"SHASHb": SHASHb,
-                         "SHASHo": SHASHo, "SHASHo2": SHASHo2}
+            SHASH_map = {"SHASHb": SHASHb, "SHASHo": SHASHo, "SHASHo2": SHASHo2}
 
             mu = pm.Deterministic(
                 "mu_samples",
@@ -291,7 +292,7 @@ def hbr(X, y, batch_effects, configs, idata=None):
                     mu_intercept_mu_params=(0.0, 2.0),
                     sigma_intercept_mu_params=(2.0,),
                 ).get_samples(pb),
-                dims=get_sample_dims('mu'),
+                dims=get_sample_dims("mu"),
             )
             sigma = pm.Deterministic(
                 "sigma_samples",
@@ -302,10 +303,12 @@ def hbr(X, y, batch_effects, configs, idata=None):
                     slope_sigma_params=(0.0, 1.0),
                     intercept_sigma_params=(1.0, 1.0),
                 ).get_samples(pb),
-                dims=get_sample_dims('sigma'),
+                dims=get_sample_dims("sigma"),
             )
             sigma_plus = pm.Deterministic(
-                "sigma_plus_samples", np.log(1 + np.exp(sigma)), dims=get_sample_dims('sigma')
+                "sigma_plus_samples",
+                np.log(1 + np.exp(sigma)),
+                dims=get_sample_dims("sigma"),
             )
             epsilon = pm.Deterministic(
                 "epsilon_samples",
@@ -315,7 +318,7 @@ def hbr(X, y, batch_effects, configs, idata=None):
                     slope_epsilon_params=(0.0, 0.2),
                     intercept_epsilon_params=(0.0, 0.2),
                 ).get_samples(pb),
-                dims=get_sample_dims('epsilon'),
+                dims=get_sample_dims("epsilon"),
             )
             delta = pm.Deterministic(
                 "delta_samples",
@@ -326,12 +329,12 @@ def hbr(X, y, batch_effects, configs, idata=None):
                     slope_delta_params=(0.0, 0.2),
                     intercept_delta_params=(1.0, 0.3),
                 ).get_samples(pb),
-                dims=get_sample_dims('delta'),
+                dims=get_sample_dims("delta"),
             )
             delta_plus = pm.Deterministic(
                 "delta_plus_samples",
                 np.log(1 + np.exp(delta * 10)) / 10 + 0.3,
-                dims=get_sample_dims('delta'),
+                dims=get_sample_dims("delta"),
             )
             y_like = SHASH_map[configs["likelihood"]](
                 "y_like",
@@ -346,7 +349,6 @@ def hbr(X, y, batch_effects, configs, idata=None):
 
 
 class HBR:
-
     """Hierarchical Bayesian Regression for normative modeling
 
     Basic usage::
@@ -392,8 +394,7 @@ class HBR:
             Phi = create_poly_basis(X, self.configs["order"])
         elif self.model_type == "bspline":
             if self.bsp is None:
-                self.bsp = bspline_fit(
-                    X, self.configs["order"], self.configs["nknots"])
+                self.bsp = bspline_fit(X, self.configs["order"], self.configs["nknots"])
             bspline = bspline_transform(X, self.bsp)
             Phi = np.concatenate((X, bspline), axis=1)
         else:
@@ -404,8 +405,8 @@ class HBR:
         """
         Find the maximum a posteriori (MAP) estimate of the model parameters.
 
-        This function transforms the data according to the model type, 
-        and then uses the modeler to find the MAP estimate of the model parameters. 
+        This function transforms the data according to the model type,
+        and then uses the modeler to find the MAP estimate of the model parameters.
         The results are stored in the instance variable `MAP`.
 
         :param X: N-by-P input matrix of P features for N subjects. This is the input data for the model.
@@ -425,8 +426,8 @@ class HBR:
         """
         Estimate the model parameters using the provided data.
 
-        This function transforms the data according to the model type, 
-        and then samples from the posterior using pymc. The results are stored 
+        This function transforms the data according to the model type,
+        and then samples from the posterior using pymc. The results are stored
         in the instance variable `idata`.
 
         :param X: N-by-P input matrix of P features for N subjects. This is the input data for the model.
@@ -438,7 +439,7 @@ class HBR:
         X, y, batch_effects = expand_all(X, y, batch_effects)
         X = self.transform_X(X)
         modeler = self.get_modeler()
-        if hasattr(self, 'idata'):
+        if hasattr(self, "idata"):
             del self.idata
         with modeler(X, y, batch_effects, self.configs) as m:
             self.idata = pm.sample(
@@ -449,14 +450,17 @@ class HBR:
                 n_init=500000,
                 cores=self.configs["cores"],
             )
-        self.vars_to_sample = ['y_like']
-        if self.configs['remove_datapoints_from_posterior']:
-            chain = self.idata.posterior.coords['chain'].data
-            draw = self.idata.posterior.coords['draw'].data
+        self.vars_to_sample = ["y_like"]
+        if self.configs["remove_datapoints_from_posterior"]:
+            chain = self.idata.posterior.coords["chain"].data
+            draw = self.idata.posterior.coords["draw"].data
             for j in self.idata.posterior.variables.mapping.keys():
-                if j.endswith('_samples'):
-                    dummy_array = xarray.DataArray(data=np.zeros((len(chain), len(draw), 1)), coords={
-                                                   'chain': chain, 'draw': draw, 'empty': np.array([0])}, name=j)
+                if j.endswith("_samples"):
+                    dummy_array = xarray.DataArray(
+                        data=np.zeros((len(chain), len(draw), 1)),
+                        coords={"chain": chain, "draw": draw, "empty": np.array([0])},
+                        name=j,
+                    )
                     self.idata.posterior[j] = dummy_array
                     self.vars_to_sample.append(j)
 
@@ -469,12 +473,18 @@ class HBR:
         return self.idata
 
     def predict(
-        self, X, batch_effects, batch_effects_maps, pred="single", var_names=None, **kwargs
+        self,
+        X,
+        batch_effects,
+        batch_effects_maps,
+        pred="single",
+        var_names=None,
+        **kwargs,
     ):
         """
         Make predictions from the model.
 
-        This function expands the input data, transforms it according to the model type, 
+        This function expands the input data, transforms it according to the model type,
         and then uses the modeler to make predictions. The results are stored in the instance variable `idata`.
 
         :param X: Covariates. This is the input data for the model.
@@ -495,21 +505,20 @@ class HBR:
         # Make an array with occurences of all the values in be_train, but with the same size as be_test
         truncated_batch_effects_train = np.stack(
             [
-                np.resize(
-                    np.array(list(batch_effects_maps[i].keys())), X.shape[0])
+                np.resize(np.array(list(batch_effects_maps[i].keys())), X.shape[0])
                 for i in range(batch_effects.shape[1])
             ],
             axis=1,
         )
 
         # See if a list of var_names is provided, set to self.vars_to_sample otherwise
-        if (var_names is None) or (var_names == ['y_like']):
+        if (var_names is None) or (var_names == ["y_like"]):
             var_names = self.vars_to_sample
 
         n_samples = X.shape[0]
 
         # Need to delete self.idata.posterior_predictive, otherwise, if it exists, it will not be overwritten
-        if hasattr(self.idata, 'posterior_predictive'):
+        if hasattr(self.idata, "posterior_predictive"):
             del self.idata.posterior_predictive
 
         with modeler(X, y, truncated_batch_effects_train, self.configs) as model:
@@ -528,10 +537,10 @@ class HBR:
                 progressbar=True,
                 var_names=var_names,
             )
-        pred_mean = self.idata.posterior_predictive["y_like"].to_numpy().mean(
-            axis=(0, 1))
-        pred_var = self.idata.posterior_predictive["y_like"].to_numpy().var(
-            axis=(0, 1))
+        pred_mean = (
+            self.idata.posterior_predictive["y_like"].to_numpy().mean(axis=(0, 1))
+        )
+        pred_var = self.idata.posterior_predictive["y_like"].to_numpy().var(axis=(0, 1))
 
         return pred_mean, pred_var
 
@@ -539,7 +548,7 @@ class HBR:
         """
         Estimate the model parameters using the provided data for a new site.
 
-        This function transforms the input data, then uses the modeler to estimate the model parameters. 
+        This function transforms the input data, then uses the modeler to estimate the model parameters.
         The results are stored in the instance variable `idata`.
 
         :param X: Covariates. This is the input data for the model.
@@ -566,7 +575,7 @@ class HBR:
         """
         Make predictions from the model for a new site.
 
-        This function transforms the input data, then uses the modeler to make predictions. 
+        This function transforms the input data, then uses the modeler to make predictions.
         The results are stored in the instance variable `idata`.
 
         :param X: Covariates. This is the input data for the model.
@@ -580,7 +589,10 @@ class HBR:
         modeler = self.get_modeler()
         with modeler(X, y, batch_effects, self.configs, idata=self.idata):
             self.idata = pm.sample_posterior_predictive(
-                self.idata, extend_inferencedata=True, progressbar=True, var_names=self.vars_to_sample
+                self.idata,
+                extend_inferencedata=True,
+                progressbar=True,
+                var_names=self.vars_to_sample,
             )
         pred_mean = self.idata.posterior_predictive["y_like"].mean(axis=(0, 1))
         pred_var = self.idata.posterior_predictive["y_like"].var(axis=(0, 1))
@@ -591,7 +603,7 @@ class HBR:
         """
         Generate samples from the posterior predictive distribution.
 
-        This function expands and transforms the input data, then uses the modeler to generate samples from the posterior predictive distribution. 
+        This function expands and transforms the input data, then uses the modeler to generate samples from the posterior predictive distribution.
 
         :param X: Covariates. This is the input data for the model.
         :param batch_effects: Batch effects corresponding to X. This represents the batch effects to be considered in the model.
@@ -607,8 +619,7 @@ class HBR:
         with modeler(X, y, batch_effects, self.configs):
             ppc = pm.sample_posterior_predictive(self.idata, progressbar=True)
         generated_samples = np.reshape(
-            ppc.posterior_predictive["y_like"].squeeze().T, [
-                X.shape[0] * samples, 1]
+            ppc.posterior_predictive["y_like"].squeeze().T, [X.shape[0] * samples, 1]
         )
         X = np.repeat(X, samples)
         if len(X.shape) == 1:
@@ -622,7 +633,7 @@ class HBR:
         """
         Sample from the prior predictive distribution.
 
-        This function transforms the input data, then uses the modeler to sample from the prior predictive distribution. 
+        This function transforms the input data, then uses the modeler to sample from the prior predictive distribution.
 
         :param X: Covariates. This is the input data for the model.
         :param batch_effects: Batch effects corresponding to X. This represents the batch effects to be considered in the model.
@@ -662,7 +673,7 @@ class HBR:
         """
         Create dummy inputs for the model.
 
-        This function generates a Cartesian product of the provided covariate ranges and repeats it for each batch effect. 
+        This function generates a Cartesian product of the provided covariate ranges and repeats it for each batch effect.
         It also generates a Cartesian product of the batch effect indices and repeats it for each input sample.
 
         :param covariate_ranges: List of lists, where each inner list represents the range and step size of a covariate. Default is [[0.1, 0.9, 0.01]].
@@ -678,8 +689,7 @@ class HBR:
                 )
             )
         X = cartesian_product(arrays)
-        X_dummy = np.concatenate(
-            [X for i in range(np.prod(self.batch_effects_size))])
+        X_dummy = np.concatenate([X for i in range(np.prod(self.batch_effects_size))])
         arrays = []
         for i in range(self.batch_effects_num):
             arrays.append(np.arange(0, self.batch_effects_size[i]))
@@ -699,20 +709,22 @@ class HBR:
         :return: A dictionary where the keys are variable names and the values are arrays of Rhat values.
         """
         idata = self.idata
-        testvars = az.extract(idata, group='posterior',
-                              var_names=var_names, combined=False)
-        testvar_names = [var for var in list(
-            testvars.data_vars.keys()) if not '_samples' in var]
+        testvars = az.extract(
+            idata, group="posterior", var_names=var_names, combined=False
+        )
+        testvar_names = [
+            var for var in list(testvars.data_vars.keys()) if not "_samples" in var
+        ]
         rhat_dict = {}
         for var_name in testvar_names:
             var = np.stack(testvars[var_name].to_numpy())[:, ::thin]
             var = var.reshape((var.shape[0], var.shape[1], -1))
             vardim = var.shape[2]
-            interval_skip = var.shape[1]//resolution
+            interval_skip = var.shape[1] // resolution
             rhats_var = np.zeros((resolution, vardim))
             for v in range(vardim):
                 for j in range(resolution):
-                    rhats_var[j, v] = az.rhat(var[:, :j*interval_skip, v])
+                    rhats_var[j, v] = az.rhat(var[:, : j * interval_skip, v])
             rhat_dict[var_name] = rhats_var
         return rhat_dict
 
@@ -728,7 +740,7 @@ class Prior:
         """
         Initialize the Prior object.
 
-        This function initializes the Prior object with the given name, distribution, parameters, and model. 
+        This function initializes the Prior object with the given name, distribution, parameters, and model.
         It also sets a flag indicating whether the prior has a random effect.
 
         :param name: String representing the name of the prior.
@@ -756,7 +768,7 @@ class Prior:
         """
         Create a PyMC distribution.
 
-        This function creates a PyMC distribution. If there is an `idata` present, the distribution is fitted to the `idata`. 
+        This function creates a PyMC distribution. If there is an `idata` present, the distribution is fitted to the `idata`.
         If there isn't an `idata`, the prior is parameterized by the values in `params`.
 
         :param dist: String representing the type of the distribution.
@@ -771,13 +783,16 @@ class Prior:
 
                 def get_new_dim_size(tup):
                     oldsize, name = tup
-                    if name.startswith('batch_effect_'):
+                    if name.startswith("batch_effect_"):
                         ind = pb.batch_effect_dim_names.index(name)
-                        return len(np.unique(pb.batch_effect_indices[ind].container.data))
+                        return len(
+                            np.unique(pb.batch_effect_indices[ind].container.data)
+                        )
                     return oldsize
 
                 new_shape = list(
-                    map(get_new_dim_size, zip(samples.shape, samples.dims)))
+                    map(get_new_dim_size, zip(samples.shape, samples.dims))
+                )
                 if len(new_shape) == 1:
                     new_shape = None
                 else:
@@ -794,19 +809,20 @@ class Prior:
                 dims = []
                 if self.has_random_effect:
                     dims = dims + pb.batch_effect_dim_names
-                if self.name.startswith("slope") or self.name.startswith("offset_slope"):
+                if self.name.startswith("slope") or self.name.startswith(
+                    "offset_slope"
+                ):
                     dims = dims + ["basis_functions"]
                 if dims == []:
                     self.dist = self.distmap[dist](self.name, *params)
                 else:
-                    self.dist = self.distmap[dist](
-                        self.name, *params, dims=dims)
+                    self.dist = self.distmap[dist](self.name, *params, dims=dims)
 
     def __getitem__(self, idx):
         """
         Retrieve the distribution for a specific batch effect.
 
-        This function retrieves the distribution for a specific batch effect. 
+        This function retrieves the distribution for a specific batch effect.
         If the prior does not model batch effects, this should return the same value for each index.
 
         :param idx: Index of the batch effect.
@@ -865,9 +881,9 @@ class ParamBuilder:
         """
         Create a parameterization based on the configuration.
 
-        This function creates a parameterization based on the configuration. 
-        If the configuration specifies a linear parameterization, it creates a slope and intercept and uses those to make a linear parameterization. 
-        If the configuration specifies a random parameterization, it creates a random parameterization, either centered or non-centered. 
+        This function creates a parameterization based on the configuration.
+        If the configuration specifies a linear parameterization, it creates a slope and intercept and uses those to make a linear parameterization.
+        If the configuration specifies a random parameterization, it creates a random parameterization, either centered or non-centered.
         Otherwise, it creates a fixed parameterization.
 
         :param name: String representing the name of the parameter.
@@ -877,8 +893,7 @@ class ParamBuilder:
         if self.configs.get(f"linear_{name}", False):
             # First make a slope and intercept, and use those to make a linear parameterization
             slope_parameterization = self.make_param(f"slope_{name}", **kwargs)
-            intercept_parameterization = self.make_param(
-                f"intercept_{name}", **kwargs)
+            intercept_parameterization = self.make_param(f"intercept_{name}", **kwargs)
             return LinearParameterization(
                 name=name,
                 slope_parameterization=slope_parameterization,
@@ -927,7 +942,7 @@ class Parameterization:
 
 class FixedParameterization(Parameterization):
     """
-    A parameterization that takes a single value for all input. 
+    A parameterization that takes a single value for all input.
 
     It does not depend on anything except its hyperparameters. This class inherits from the Parameterization class.
     """
@@ -962,7 +977,7 @@ class FixedParameterization(Parameterization):
 
 class CentralRandomFixedParameterization(Parameterization):
     """
-    A parameterization that is fixed for each batch effect. 
+    A parameterization that is fixed for each batch effect.
 
     This is sampled in a central fashion; the values are sampled from normal distribution with a group mean and group variance
     """
@@ -1108,14 +1123,17 @@ class LinearParameterization(Parameterization):
         """
         with pb.model:
             intc = self.intercept_parameterization.get_samples(pb)
-            slope_samples = self.slope_parameterization.get_samples(pb)
+            slope = self.slope_parameterization.get_samples(pb)
             if pb.configs[f"random_slope_{self.name}"]:
-                slope = pb.X * slope_samples
-                slope = slope.sum(axis=-1)
-            else:
-                slope = pb.X @ self.slope_parameterization.get_samples(pb)
+                unique_slopes, idx = unique(
+                    slope, axis=0, return_inverse=True
+                )
+                samples = pm.math.flatten(intc) + pm.math.flatten((pb.X * unique_slopes[idx]).sum(axis=1))
+                
 
-            samples = pm.math.flatten(intc) + pm.math.flatten(slope)
+            else:
+                samples = pm.math.flatten(intc) + pm.math.flatten(pb.X @ slope)
+
             return samples
 
 
@@ -1161,16 +1179,14 @@ def nn_hbr(X, y, batch_effects, batch_effects_size, configs, idata=None):
     init_1_noise = pm.floatX(
         np.random.randn(feature_num, n_hidden) * np.sqrt(1 / feature_num)
     )
-    init_out_noise = pm.floatX(np.random.randn(
-        n_hidden) * np.sqrt(1 / n_hidden))
+    init_out_noise = pm.floatX(np.random.randn(n_hidden) * np.sqrt(1 / n_hidden))
 
     std_init_1_noise = pm.floatX(np.random.rand(feature_num, n_hidden))
     std_init_out_noise = pm.floatX(np.random.rand(n_hidden))
 
     # If there are two hidden layers, then initialize weights for the second layer:
     if n_layers == 2:
-        init_2 = pm.floatX(np.random.randn(
-            n_hidden, n_hidden) * np.sqrt(1 / n_hidden))
+        init_2 = pm.floatX(np.random.randn(n_hidden, n_hidden) * np.sqrt(1 / n_hidden))
         std_init_2 = pm.floatX(np.random.rand(n_hidden, n_hidden))
         init_2_noise = pm.floatX(
             np.random.randn(n_hidden, n_hidden) * np.sqrt(1 / n_hidden)
@@ -1271,8 +1287,7 @@ def nn_hbr(X, y, batch_effects, batch_effects_size, configs, idata=None):
             )
 
             # mu_prior_intercept = pm.Uniform('mu_prior_intercept', lower=-100, upper=100)
-            mu_prior_intercept = pm.Normal(
-                "mu_prior_intercept", mu=0.0, sigma=1e3)
+            mu_prior_intercept = pm.Normal("mu_prior_intercept", mu=0.0, sigma=1e3)
             sigma_prior_intercept = pm.HalfCauchy("sigma_prior_intercept", 5)
 
         # Now create separate weights for each group, by doing
@@ -1311,21 +1326,17 @@ def nn_hbr(X, y, batch_effects, batch_effects_size, configs, idata=None):
                 a.append(batch_effects[:, i] == b)
             idx = reduce(np.logical_and, a).nonzero()
             if idx[0].shape[0] != 0:
-                act_1 = pm.math.tanh(pytensor.tensor.dot(
-                    X[idx, :], weights_in_1[be]))
+                act_1 = pm.math.tanh(pytensor.tensor.dot(X[idx, :], weights_in_1[be]))
                 if n_layers == 2:
-                    act_2 = pm.math.tanh(
-                        pytensor.tensor.dot(act_1, weights_1_2[be]))
+                    act_2 = pm.math.tanh(pytensor.tensor.dot(act_1, weights_1_2[be]))
                     y_hat = pytensor.tensor.set_subtensor(
                         y_hat[idx, 0],
-                        intercepts[be] +
-                        pytensor.tensor.dot(act_2, weights_2_out[be]),
+                        intercepts[be] + pytensor.tensor.dot(act_2, weights_2_out[be]),
                     )
                 else:
                     y_hat = pytensor.tensor.set_subtensor(
                         y_hat[idx, 0],
-                        intercepts[be] +
-                        pytensor.tensor.dot(act_1, weights_2_out[be]),
+                        intercepts[be] + pytensor.tensor.dot(act_1, weights_2_out[be]),
                     )
 
         # If we want to estimate varying noise terms across groups:
@@ -1472,13 +1483,11 @@ def nn_hbr(X, y, batch_effects, batch_effects_size, configs, idata=None):
                     idx = reduce(np.logical_and, a).nonzero()
                     if idx[0].shape[0] != 0:
                         act_1_noise = pm.math.sigmoid(
-                            pytensor.tensor.dot(
-                                X[idx, :], weights_in_1_noise[be])
+                            pytensor.tensor.dot(X[idx, :], weights_in_1_noise[be])
                         )
                         if n_layers == 2:
                             act_2_noise = pm.math.sigmoid(
-                                pytensor.tensor.dot(
-                                    act_1_noise, weights_1_2_noise[be])
+                                pytensor.tensor.dot(act_1_noise, weights_1_2_noise[be])
                             )
                             temp = (
                                 pm.math.log1pexp(
@@ -1497,8 +1506,7 @@ def nn_hbr(X, y, batch_effects, batch_effects_size, configs, idata=None):
                                 )
                                 + 1e-5
                             )
-                        sigma_y = pytensor.tensor.set_subtensor(
-                            sigma_y[idx, 0], temp)
+                        sigma_y = pytensor.tensor.set_subtensor(sigma_y[idx, 0], temp)
 
             else:  # homoscedastic noise:
                 if idata is not None:  # Used for transferring the priors
@@ -1528,8 +1536,7 @@ def nn_hbr(X, y, batch_effects, batch_effects_size, configs, idata=None):
         else:  # do not allow for random noise terms across groups:
             if idata is not None:  # Used for transferring the priors
                 upper_bound = np.percentile(idata["sigma_noise"], 95)
-                sigma_noise = pm.Uniform(
-                    "sigma_noise", lower=0, upper=2 * upper_bound)
+                sigma_noise = pm.Uniform("sigma_noise", lower=0, upper=2 * upper_bound)
             else:
                 sigma_noise = pm.Uniform("sigma_noise", lower=0, upper=100)
             sigma_y = pytensor.tensor.zeros(y.shape)
@@ -1554,8 +1561,7 @@ def nn_hbr(X, y, batch_effects, batch_effects_size, configs, idata=None):
                     a.append(batch_effects[:, i] == b)
                 idx = reduce(np.logical_and, a).nonzero()
                 if idx[0].shape[0] != 0:
-                    alpha = pytensor.tensor.set_subtensor(
-                        alpha[idx, 0], skewness[be])
+                    alpha = pytensor.tensor.set_subtensor(alpha[idx, 0], skewness[be])
         else:
             alpha = 0  # symmetrical normal distribution
 

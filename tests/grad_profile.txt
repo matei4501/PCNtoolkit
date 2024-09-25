@@ -1,0 +1,92 @@
+Function profiling
+==================
+  Message: /home/guus/anaconda3/envs/pcntk_dev/lib/python3.12/site-packages/pymc/pytensorf.py:1023
+  Time in 1000 calls to Function.__call__: 1.655133e+01s
+  Time in Function.vm.__call__: 16.36961923808849s (98.902%)
+  Time in thunks: 16.253204584121704s (98.199%)
+  Total compilation time: 1.876074e+00s
+    Number of Apply nodes: 59
+    PyTensor rewrite time: 1.716711e+00s
+       PyTensor validate time: 3.135441e-02s
+    PyTensor Linker time (includes C, CUDA code generation/compiling): 0.14710121200187132s
+       C-cache preloading 1.292569e-02s
+       Import time 3.762560e-02s
+       Node make_thunk time 1.317453e-01s
+           Node Shape_i{1}(offset_slope_mu) time 5.686249e-03s
+           Node Composite{...}(sigma_slope_mu_log__, 0.0, 0, -0.11111112) time 5.205315e-03s
+           Node AdvancedIncSubtensor1{inplace,inc}(Composite{...}.1, Composite{...}.0, batch_effect_0_data) time 4.972652e-03s
+           Node Mul(AdvancedIncSubtensor1{inplace,inc}.0, offset_intercept_mu) time 4.458014e-03s
+           Node Reshape{1}((d__logp/dmu_sigma), [-1]) time 4.376323e-03s
+
+Time in all call to pytensor.grad() 6.495550e-01s
+Time since pytensor import 57.236s
+Class
+---
+<% time> <sum %> <apply time> <time per call> <type> <#call> <#apply> <Class name>
+  58.0%    58.0%       9.420s       3.14e-03s     C     3000       3   pytensor.tensor.subtensor.AdvancedIncSubtensor1
+  27.8%    85.8%       4.519s       2.38e-04s     C    19000      19   pytensor.tensor.elemwise.Elemwise
+   9.3%    95.1%       1.516s       5.05e-04s     C     3000       3   pytensor.tensor.subtensor.AdvancedSubtensor1
+   3.7%    98.8%       0.599s       8.56e-05s     C     7000       7   pytensor.tensor.math.Sum
+   0.5%    99.3%       0.082s       1.17e-05s     C     7000       7   pytensor.tensor.elemwise.DimShuffle
+   0.4%    99.7%       0.067s       9.52e-06s     C     7000       7   pytensor.tensor.shape.Reshape
+   0.1%    99.8%       0.024s       2.38e-05s     C     1000       1   pytensor.tensor.basic.Join
+   0.1%    99.9%       0.015s       7.71e-06s     C     2000       2   pytensor.tensor.basic.Alloc
+   0.0%   100.0%       0.007s       1.67e-06s     C     4000       4   pytensor.tensor.shape.Shape_i
+   0.0%   100.0%       0.004s       7.34e-07s     C     6000       6   pytensor.tensor.shape.SpecifyShape
+   ... (remaining 0 Classes account for   0.00%(0.00s) of the runtime)
+
+Ops
+---
+<% time> <sum %> <apply time> <time per call> <type> <#call> <#apply> <Op name>
+  58.0%    58.0%       9.420s       3.14e-03s     C     3000        3   AdvancedIncSubtensor1{inplace,inc}
+  18.9%    76.9%       3.073s       3.07e-03s     C     1000        1   Composite{...}
+   9.3%    86.2%       1.516s       5.05e-04s     C     3000        3   AdvancedSubtensor1
+   5.3%    91.5%       0.860s       2.87e-04s     C     3000        3   Mul
+   3.5%    95.0%       0.568s       5.68e-04s     C     1000        1   Sum{axis=1}
+   3.3%    98.3%       0.544s       5.44e-04s     C     1000        1   Mul
+   0.4%    98.7%       0.067s       9.52e-06s     C     7000        7   Reshape{1}
+   0.2%    99.0%       0.036s       9.04e-06s     C     4000        4   ExpandDims{axis=0}
+   0.2%    99.2%       0.033s       3.33e-05s     C     1000        1   ExpandDims{axis=1}
+   0.2%    99.4%       0.031s       5.22e-06s     C     6000        6   Sum{axes=None}
+   0.1%    99.5%       0.024s       2.38e-05s     C     1000        1   Join
+   0.1%    99.6%       0.015s       7.71e-06s     C     2000        2   Alloc
+   0.1%    99.7%       0.012s       6.24e-06s     C     2000        2   ExpandDims{axes=[0, 1]}
+   0.0%    99.7%       0.008s       3.92e-06s     C     2000        2   Composite{(i2 + (i0 * i1))}
+   0.0%    99.8%       0.008s       3.84e-06s     C     2000        2   Composite{...}
+   0.0%    99.8%       0.007s       7.02e-06s     C     1000        1   Composite{...}
+   0.0%    99.8%       0.006s       1.92e-06s     C     3000        3   Shape_i{0}
+   0.0%    99.9%       0.004s       7.34e-07s     C     6000        6   SpecifyShape
+   0.0%    99.9%       0.004s       2.20e-06s     C     2000        2   Composite{((i0 * i1) - i2)}
+   0.0%    99.9%       0.004s       1.85e-06s     C     2000        2   Composite{((i0 * i1) + i2)}
+   ... (remaining 5 Ops account for   0.08%(0.01s) of the runtime)
+
+Apply
+------
+<% time> <sum %> <apply time> <time per call> <#call> <id> <Apply name>
+  46.8%    46.8%       7.610s       7.61e-03s   1000    40   AdvancedIncSubtensor1{inplace,inc}(Alloc.0, Mul.0, batch_effect_0_data)
+  18.9%    65.7%       3.073s       3.07e-03s   1000    27   Composite{...}(AdvancedSubtensor1.0, y, AdvancedSubtensor1.0, Sum{axis=1}.0)
+   5.6%    71.3%       0.914s       9.14e-04s   1000    30   AdvancedIncSubtensor1{inplace,inc}(Alloc.0, Composite{...}.1, batch_effect_0_data)
+   5.5%    76.9%       0.896s       8.96e-04s   1000    29   AdvancedIncSubtensor1{inplace,inc}(Composite{...}.1, Composite{...}.0, batch_effect_0_data)
+   5.2%    82.1%       0.852s       8.52e-04s   1000    35   Mul(ExpandDims{axis=1}.0, X)
+   3.5%    85.6%       0.568s       5.68e-04s   1000    24   Sum{axis=1}(Mul.0)
+   3.3%    88.9%       0.544s       5.44e-04s   1000    21   Mul(X, AdvancedSubtensor1.0)
+   3.3%    92.2%       0.531s       5.31e-04s   1000     7   AdvancedSubtensor1(sigma, batch_effect_0_data)
+   3.1%    95.3%       0.499s       4.99e-04s   1000    19   AdvancedSubtensor1(Composite{(i2 + (i0 * i1))}.0, batch_effect_0_data)
+   3.0%    98.3%       0.486s       4.86e-04s   1000    18   AdvancedSubtensor1(Composite{(i2 + (i0 * i1))}.0, batch_effect_0_data)
+   0.2%    98.5%       0.034s       3.36e-05s   1000    53   Reshape{1}((d__logp/dmu_slope_mu), [-1])
+   0.2%    98.7%       0.033s       3.33e-05s   1000    31   ExpandDims{axis=1}(Composite{...}.1)
+   0.1%    98.8%       0.024s       2.38e-05s   1000    58   Join(0, SpecifyShape.0, SpecifyShape.0, Reshape{1}.0, SpecifyShape.0, SpecifyShape.0, (d__logp/doffset_intercept_mu), SpecifyShape.0, SpecifyShape.0, (d__logp/dsigma))
+   0.1%    98.9%       0.019s       1.88e-05s   1000    13   ExpandDims{axis=0}(Composite{...}.0)
+   0.1%    99.1%       0.017s       1.70e-05s   1000    44   Sum{axes=None}(AdvancedIncSubtensor1{inplace,inc}.0)
+   0.1%    99.1%       0.012s       1.25e-05s   1000    42   Reshape{1}((d__logp/dmu_intercept_mu), [-1])
+   0.1%    99.2%       0.009s       8.52e-06s   1000    11   ExpandDims{axes=[0, 1]}(Composite{...}.0)
+   0.0%    99.2%       0.008s       7.79e-06s   1000    10   Alloc([[0.]], Shape_i{0}.0, Shape_i{1}.0)
+   0.0%    99.3%       0.008s       7.64e-06s   1000    12   Alloc([0.], Shape_i{0}.0)
+   0.0%    99.3%       0.008s       7.60e-06s   1000     9   ExpandDims{axis=0}(mu_sigma)
+   ... (remaining 39 Apply instances account for 0.68%(0.11s) of the runtime)
+
+Here are tips to potentially make your code run faster
+                 (if you think of new ones, suggest them on the mailing list).
+                 Test them first, as they are not guaranteed to always provide a speedup.
+  - Try installing amdlibm and set the PyTensor flag lib__amblibm=True. This speeds up only some Elemwise operation.
+  - With the default gcc libm, exp in float32 is slower than in float64! Try PyTensor flag floatX=float64, or install amdlibm and set the pytensor flags lib__amblibm=True
