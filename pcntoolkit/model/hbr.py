@@ -18,6 +18,7 @@ import numpy as np
 import pymc as pm
 import pytensor
 from pytensor.tensor.extra_ops import unique
+from pytensor.tensor.subtensor import inc_subtensor, set_subtensor
 import arviz as az
 import xarray
 
@@ -1125,11 +1126,15 @@ class LinearParameterization(Parameterization):
             intc = self.intercept_parameterization.get_samples(pb)
             slope = self.slope_parameterization.get_samples(pb)
             if pb.configs[f"random_slope_{self.name}"]:
-                unique_slopes, idx = unique(
-                    slope, axis=0, return_inverse=True
-                )
-                samples = pm.math.flatten(intc) + pm.math.flatten((pb.X * unique_slopes[idx]).sum(axis=1))
-                
+                result = pm.math.flatten(intc.copy())
+                unique_slopes, idx = unique(slope, axis=0, return_inverse=True)
+                for i, unique_slope in enumerate(unique_slopes.eval()):
+                    mask = np.array(idx == i)
+                    subset = result[mask]
+                    set_subtensor(subset, subset + pb.X[mask] @ unique_slope)
+
+                return result
+                # samples = pm.math.flatten(intc) + pm.math.flatten((pb.X * unique_slopes[idx]).sum(axis=1))
 
             else:
                 samples = pm.math.flatten(intc) + pm.math.flatten(pb.X @ slope)
