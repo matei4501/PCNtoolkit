@@ -23,11 +23,11 @@ See: Jones et al. (2009), Sinh-Arcsinh distributions.
 """
 
 
-def K(p, x):
-    """
-    Modified Bessel function of the second kind, scipy implementation
-    """
-    return spp.kv(p, x)
+# def K(p, x):
+#     """
+#     Modified Bessel function of the second kind, scipy implementation
+#     """
+#     return spp.kv(p, x)
 
 
 def unique_K(p, x):
@@ -57,13 +57,18 @@ class K(Op):
         x = inputs_storage[1]
         output_storage[0][0] = unique_K(p, x)
 
-    # def grad(self, inputs, output_grads):
-    #     # Approximation of the derivative. This should suffice for using NUTS
-    #     dp = 1e-10
-    #     p = inputs[0]
-    #     x = inputs[1]
-    #     grad = (unique_K(p + dp, x) - unique_K(p, x)) / dp
-    #     return [output_grads[0] * grad, grad_not_implemented('K', 1, 2, 3)]
+    def grad(self, inputs, output_grads):
+        # Approximation of the derivative. This should suffice for using NUTS
+        dp = 1e-10
+        p = inputs[0]
+        x = inputs[1]
+        grad = (K()(p + dp, x) - K()(p, x)) / dp
+        return [
+            output_grads[0] * grad,
+            grad_not_implemented(
+                "K", 1, "x", "Gradient not implemented with respect to x"
+            ),
+        ]
 
 
 def S(x, epsilon, delta):
@@ -98,8 +103,8 @@ def P(q):
     :return:
     """
     frac = np.exp(1.0 / 4.0) / np.power(8.0 * np.pi, 1.0 / 2.0)
-    K1 = K((q + 1) / 2, 1.0 / 4.0)
-    K2 = K((q - 1) / 2, 1.0 / 4.0)
+    K1 = K()((q + 1) / 2, 1.0 / 4.0)
+    K2 = K()((q - 1) / 2, 1.0 / 4.0)
     a = (K1 + K2) * frac
     return a
 
@@ -286,8 +291,8 @@ class SHASHbRV(RandomVariable):
         size: Optional[Union[List[int], int]],
     ) -> np.ndarray:
         s = rng.normal(size=size)
-        mean = np.sinh(epsilon / delta) * numpy_P(1 / delta)
-        var = ((np.cosh(2 * epsilon / delta) * numpy_P(2 / delta) - 1) / 2) - mean**2
+        mean = np.sinh(epsilon / delta) * P(1 / delta)
+        var = ((np.cosh(2 * epsilon / delta) * P(2 / delta) - 1) / 2) - mean**2
         out = (
             (np.sinh((np.arcsinh(s) + epsilon) / delta) - mean) / np.sqrt(var)
         ) * sigma + mu
