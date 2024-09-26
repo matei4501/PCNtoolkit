@@ -338,22 +338,22 @@ class HBR(RegressionModel):
             mu_samples = pm.Deterministic(
                 "mu_samples",
                 self.reg_conf.mu.get_samples(data),
-                self.reg_conf.mu.sample_dims,
+                dims=self.reg_conf.mu.sample_dims,
             )
             sigma_samples = pm.Deterministic(
                 "sigma_samples",
                 self.reg_conf.sigma.get_samples(data),
-                self.reg_conf.sigma.sample_dims,
+                dims=self.reg_conf.sigma.sample_dims,
             )
             epsilon_samples = pm.Deterministic(
                 "epsilon_samples",
                 self.reg_conf.epsilon.get_samples(data),
-                dims=("datapoints", "response_vars"),
+                dims=self.reg_conf.epsilon.sample_dims,
             )
             delta_samples = pm.Deterministic(
                 "delta_samples",
                 self.reg_conf.delta.get_samples(data),
-                self.reg_conf.delta.sample_dims,
+                dims=self.reg_conf.delta.sample_dims,
             )
             y_pred = SHASHo(
                 "y_pred",
