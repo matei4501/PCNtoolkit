@@ -8,7 +8,8 @@ import numpy as np
 import pymc as pm
 import scipy.stats as stats
 import xarray as xr
-from pytensor.tensor.extra_ops import repeat
+from pytensor.tensor.extra_ops import repeat, unique
+from pytensor.tensor.subtensor import set_subtensor, inc_subtensor
 
 from pcntoolkit.regression_model.hbr.hbr_data import HBRData
 
@@ -59,14 +60,14 @@ class Param:
 
         if self.linear:
             self.set_linear_params()
-            self.sample_dims = ('datapoints',)
+            self.sample_dims = ("datapoints",)
 
         elif self.random:
             if self.centered:
                 self.set_centered_random_params()
             else:
                 self.set_noncentered_random_params()
-            self.sample_dims = ('datapoints',)
+            self.sample_dims = ("datapoints",)
 
         else:
             # If the parameter is really only a single number, we need to add an empty dimension so our outputs are always 2D
@@ -78,7 +79,6 @@ class Param:
                 if type(self.dims) is str:
                     self.dims = (self.dims,)
             self.sample_dims = ()
-
 
     def create_graph(self, model, idata=None, freedom=1):
         self.freedom = freedom
@@ -178,19 +178,55 @@ class Param:
         if not self.intercept:
             self.intercept = Param(f"intercept_{self.name}", dims=self.dims)
 
-
-    def get_samples(self, data: HBRData):
+    def get_samples(self, data: HBRData, return_samples=True):
         if self.linear:
-            slope_samples = self.slope.get_samples(data)
-            intercept_samples = self.intercept.get_samples(data)
-            result = (
-                pm.math.sum(slope_samples * data.pm_X, axis=1)
-                + intercept_samples
-            )
+            slope = self.slope.get_samples(data, return_samples=False)
+            intercept = self.intercept.get_samples(data, return_samples=False)
+
+            # If the slope and intercept are not random, we can just compute the result directly
+            if not self.slope.random and not self.intercept.random:
+                result = intercept + data.pm_X @ slope
+                return result
+            else:
+                # Otherwise, we optimize by applying group-wise dot products
+                be_array = pm.math.stack(data.pm_batch_effect_indices).eval().T
+                unique_batch_effect_indices = np.unique(be_array, axis=0)
+
+                if self.slope.random and not self.intercept.random:
+                    result = repeat(intercept, data.pm_X.shape[0], axis=0)
+                    for v in unique_batch_effect_indices:
+                        mask = np.array(be_array == v).all(axis=1)
+                        set_subtensor(
+                            result[mask],
+                            pm.math.dot(data.pm_X[mask], slope[*v]),
+                        )
+                    result = result + intercept
+
+                elif not self.slope.random and self.intercept.random:
+                    result = data.pm_X @ slope
+                    for v in unique_batch_effect_indices:
+                        mask = np.array(be_array == v).all(axis=1)
+                        inc_subtensor(
+                            result[mask],
+                            intercept[*v],
+                        )
+
+                else:
+                    result = pm.math.zeros(data.pm_X.shape[0])
+                    for v in unique_batch_effect_indices:
+                        mask = np.array(be_array == v).all(axis=1)
+                        set_subtensor(
+                            result[mask],
+                            pm.math.dot(data.pm_X[mask], slope[*v]) + intercept[*v],
+                        )
+
             return self.apply_mapping(result)
 
         elif self.random:
-            return self.dist[data.pm_batch_effect_indices]
+            if return_samples:
+                return self.dist[data.pm_batch_effect_indices]
+            else:
+                return self.dist
         else:
             return self.dist
 

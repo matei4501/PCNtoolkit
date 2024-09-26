@@ -1,89 +1,82 @@
 Function profiling
 ==================
   Message: /home/guus/anaconda3/envs/pcntk_dev/lib/python3.12/site-packages/pymc/pytensorf.py:1039
-  Time in 1000 calls to Function.__call__: 4.825648e-01s
-  Time in Function.vm.__call__: 0.4049326660169754s (83.913%)
-  Time in thunks: 0.36950230598449707s (76.571%)
-  Total compilation time: 1.806421e+01s
-    Number of Apply nodes: 58
-    PyTensor rewrite time: 2.880371e+00s
-       PyTensor validate time: 3.529312e-02s
-    PyTensor Linker time (includes C, CUDA code generation/compiling): 15.17330381800275s
-       C-cache preloading 1.199181e-02s
-       Import time 1.368527e-02s
-       Node make_thunk time 1.515782e+01s
-           Node Composite{((i0 * i1) - i2)}(AdvancedIncSubtensor.0, ExpandDims{axes=[0, 1]}.0, offset_slope_mu) time 3.626040e+00s
-           Node Mul(AdvancedIncSubtensor.0, offset_slope_mu) time 3.127179e+00s
-           Node Composite{...}(sigma_slope_mu_log__) time 2.754227e+00s
-           Node Composite{((-0.04 * i0) + i1)}(slope_sigma, Sum{axis=0}.0) time 2.221717e+00s
-           Node Composite{(i2 + i3 + (i0 * i1) + 1.0)}(Sum{axes=[0, 1]}.0, Composite{...}.0, Composite{...}.2, Composite{...}.1) time 1.731836e+00s
+  Time in 1000 calls to Function.__call__: 1.008905e-01s
+  Time in Function.vm.__call__: 0.04580065699701663s (45.396%)
+  Time in thunks: 0.035678863525390625s (35.364%)
+  Total compilation time: 8.950442e+00s
+    Number of Apply nodes: 21
+    PyTensor rewrite time: 2.524206e+00s
+       PyTensor validate time: 2.537930e-02s
+    PyTensor Linker time (includes C, CUDA code generation/compiling): 6.412193867996393s
+       C-cache preloading 2.114851e-02s
+       Import time 8.260295e-03s
+       Node make_thunk time 6.390173e+00s
+           Node Composite{(switch(gt(exp(i0), i1), (-(i0 - i4)), i3) + switch(gt(exp(i0), i1), i2, i3) + i5)}(sigma_intercept_mu_log__, 0.0, -1.0, 0, 2.0, 1.0) time 2.029997e+00s
+           Node Neg(Reshape{1}.0) time 1.642141e+00s
+           Node Composite{(((((i2 - 0.0) / (i0 + i1)) * (i2 - 0.0)) / sqr((i0 + i1))) + (-1.0 / (i0 + i1)))}(ExpandDims{axis=0}.0, CGemv{inplace}.0, y) time 1.523591e+00s
+           Node Composite{(switch(gt(exp(i0), 0.0), (-(i0 - 2.0)), 0) + switch(gt(exp(i0), 0.0), -1.0, 0) + 1.0)}(sigma_slope_mu_log__) time 1.167451e+00s
+           Node CGemv{no_inplace}(slope_sigma, 1.0, X.T, Composite{(((((i2 - 0.0) / (i0 + i1)) * (i2 - 0.0)) / sqr((i0 + i1))) + (-1.0 / (i0 + i1)))}.0, -0.04) time 4.007702e-03s
 
-Time in all call to pytensor.grad() 7.645233e+00s
-Time since pytensor import 1065.582s
+Time in all call to pytensor.grad() 4.812849e+00s
+Time since pytensor import 271.144s
 Class
 ---
 <% time> <sum %> <apply time> <time per call> <type> <#call> <#apply> <Class name>
-  45.4%    45.4%       0.168s       8.39e-05s     Py    2000       2   pytensor.tensor.subtensor.AdvancedIncSubtensor
-  15.9%    61.3%       0.059s       2.94e-05s     Py    2000       2   pytensor.tensor.subtensor.AdvancedSubtensor
-  14.8%    76.1%       0.055s       2.61e-06s     C    21000      21   pytensor.tensor.elemwise.Elemwise
-   7.6%    83.7%       0.028s       3.50e-06s     C     8000       8   pytensor.tensor.elemwise.DimShuffle
-   7.5%    91.2%       0.028s       3.46e-06s     C     8000       8   pytensor.tensor.math.Sum
-   4.1%    95.4%       0.015s       3.06e-06s     C     5000       5   pytensor.tensor.shape.Reshape
-   2.2%    97.6%       0.008s       8.20e-06s     C     1000       1   pytensor.tensor.basic.Join
-   1.5%    99.0%       0.005s       2.70e-06s     C     2000       2   pytensor.tensor.basic.Alloc
-   0.8%    99.8%       0.003s       4.02e-07s     C     7000       7   pytensor.tensor.shape.Shape_i
-   0.2%   100.0%       0.001s       3.87e-07s     C     2000       2   pytensor.raise_op.Assert
+  32.6%    32.6%       0.012s       2.33e-06s     C     5000       5   pytensor.tensor.shape.Reshape
+  16.0%    48.6%       0.006s       5.71e-06s     C     1000       1   pytensor.tensor.basic.Join
+  15.7%    64.3%       0.006s       2.80e-06s     C     2000       2   pytensor.tensor.blas_c.CGemv
+  14.1%    78.4%       0.005s       6.30e-07s     C     8000       8   pytensor.tensor.elemwise.Elemwise
+  13.1%    91.5%       0.005s       2.34e-06s     C     2000       2   pytensor.tensor.elemwise.DimShuffle
+   5.4%    97.0%       0.002s       1.94e-06s     C     1000       1   pytensor.tensor.math.Sum
+   1.9%    98.9%       0.001s       6.94e-07s     C     1000       1   pytensor.tensor.basic.AllocEmpty
+   1.1%   100.0%       0.000s       3.92e-07s     C     1000       1   pytensor.tensor.shape.Shape_i
    ... (remaining 0 Classes account for   0.00%(0.00s) of the runtime)
 
 Ops
 ---
 <% time> <sum %> <apply time> <time per call> <type> <#call> <#apply> <Op name>
-  45.4%    45.4%       0.168s       8.39e-05s     Py    2000        2   AdvancedIncSubtensor
-  15.9%    61.3%       0.059s       2.94e-05s     Py    2000        2   AdvancedSubtensor
-   5.7%    67.0%       0.021s       4.18e-06s     C     5000        5   Mul
-   5.2%    72.2%       0.019s       1.94e-05s     C     1000        1   Composite{...}
-   4.5%    76.7%       0.017s       8.26e-06s     C     2000        2   Sum{axis=1}
-   4.1%    80.8%       0.015s       3.06e-06s     C     5000        5   Reshape{1}
-   2.2%    83.1%       0.008s       8.20e-06s     C     1000        1   Join
-   1.9%    84.9%       0.007s       3.43e-06s     C     2000        2   ExpandDims{axis=1}
-   1.7%    86.6%       0.006s       3.13e-06s     C     2000        2   ExpandDims{axes=[0, 1]}
-   1.7%    88.3%       0.006s       6.25e-06s     C     1000        1   ExpandDims{axis=0}
-   1.5%    89.8%       0.005s       2.70e-06s     C     2000        2   Alloc
-   1.4%    91.2%       0.005s       2.67e-06s     C     2000        2   ExpandDims{axes=[0, 1]}
-   1.3%    92.5%       0.005s       1.60e-06s     C     3000        3   Sum{axes=None}
-   1.2%    93.7%       0.004s       4.27e-06s     C     1000        1   Sum{axis=0}
-   0.9%    94.6%       0.003s       3.46e-06s     C     1000        1   Mul
-   0.9%    95.5%       0.003s       3.28e-06s     C     1000        1   ExpandDims{axis=0}
-   0.7%    96.2%       0.002s       1.22e-06s     C     2000        2   Composite{(i2 + (i0 * i1))}
-   0.6%    96.7%       0.002s       1.03e-06s     C     2000        2   Sum{axes=[0, 1]}
-   0.5%    97.2%       0.002s       4.95e-07s     C     4000        4   Shape_i{0}
-   0.5%    97.7%       0.002s       8.83e-07s     C     2000        2   Composite{((i0 * i1) - i2)}
-   ... (remaining 11 Ops account for   2.27%(0.01s) of the runtime)
+  32.6%    32.6%       0.012s       2.33e-06s     C     5000        5   Reshape{1}
+  16.0%    48.6%       0.006s       5.71e-06s     C     1000        1   Join
+   7.9%    56.5%       0.003s       2.81e-06s     C     1000        1   CGemv{inplace}
+   7.8%    64.3%       0.003s       2.79e-06s     C     1000        1   CGemv{no_inplace}
+   7.4%    71.7%       0.003s       2.64e-06s     C     1000        1   Transpose{axes=[1, 0]}
+   5.7%    77.4%       0.002s       2.04e-06s     C     1000        1   ExpandDims{axis=0}
+   5.4%    82.8%       0.002s       1.94e-06s     C     1000        1   Sum{axes=None}
+   4.1%    86.9%       0.001s       1.46e-06s     C     1000        1   Composite{(((((i2 - 0.0) / (i0 + i1)) * (i2 - 0.0)) / sqr((i0 + i1))) + (-1.0 / (i0 + i1)))}
+   3.3%    90.2%       0.001s       5.87e-07s     C     2000        2   Mul
+   2.4%    92.7%       0.001s       4.35e-07s     C     2000        2   Neg
+   1.9%    94.6%       0.001s       6.94e-07s     C     1000        1   AllocEmpty{dtype='float64'}
+   1.9%    96.5%       0.001s       6.65e-07s     C     1000        1   Composite{(switch(gt(exp(i0), 0.0), (-(i0 - 2.0)), 0) + switch(gt(exp(i0), 0.0), -1.0, 0) + 1.0)}
+   1.8%    98.2%       0.001s       6.32e-07s     C     1000        1   Composite{(switch(gt(exp(i0), i1), (-(i0 - i4)), i3) + switch(gt(exp(i0), i1), i2, i3) + i5)}
+   1.1%    99.3%       0.000s       3.92e-07s     C     1000        1   Shape_i{0}
+   0.7%   100.0%       0.000s       2.37e-07s     C     1000        1   Composite{((i0 * i1) + i2)}
+   ... (remaining 0 Ops account for   0.00%(0.00s) of the runtime)
 
 Apply
 ------
 <% time> <sum %> <apply time> <time per call> <#call> <id> <Apply name>
-  37.2%    37.2%       0.138s       1.38e-04s   1000    44   AdvancedIncSubtensor(Alloc.0, Mul.0, sex_data, site_data)
-  10.3%    47.6%       0.038s       3.81e-05s   1000    23   AdvancedSubtensor(Composite{(i2 + (i0 * i1))}.0, sex_data, site_data)
-   8.2%    55.8%       0.030s       3.03e-05s   1000    32   AdvancedIncSubtensor(Alloc.0, Composite{...}.1, sex_data, site_data)
-   5.6%    61.3%       0.021s       2.06e-05s   1000    22   AdvancedSubtensor(Composite{(i2 + (i0 * i1))}.0, sex_data, site_data)
-   5.2%    66.6%       0.019s       1.94e-05s   1000    29   Composite{...}(Sum{axis=1}.0, ExpandDims{axis=0}.0, y, Sum{axis=1}.0, AdvancedSubtensor.0)
-   2.3%    68.9%       0.008s       8.46e-06s   1000    21   Sum{axis=1}(Mul.0)
-   2.2%    71.1%       0.008s       8.20e-06s   1000    57   Join(0, (d__logp/dmu_slope_mu), (d__logp/dsigma_slope_mu_log__), Reshape{1}.0, Reshape{1}.0, Reshape{1}.0, Reshape{1}.0, (d__logp/dslope_sigma), Reshape{1}.0)
-   2.2%    73.3%       0.008s       8.06e-06s   1000    27   Sum{axis=1}(Mul.0)
-   1.8%    75.1%       0.007s       6.70e-06s   1000    38   Mul(ExpandDims{axis=1}.0, X)
-   1.8%    76.8%       0.006s       6.47e-06s   1000    35   Mul(ExpandDims{axis=1}.0, X)
-   1.7%    78.5%       0.006s       6.25e-06s   1000    12   ExpandDims{axis=0}(slope_sigma)
-   1.4%    79.9%       0.005s       5.20e-06s   1000    17   Mul(ExpandDims{axis=0}.0, X)
-   1.2%    81.1%       0.005s       4.51e-06s   1000    55   Reshape{1}((d__logp/doffset_slope_mu), [-1])
-   1.2%    82.3%       0.004s       4.27e-06s   1000    41   Sum{axis=0}(Mul.0)
-   1.1%    83.4%       0.004s       4.10e-06s   1000    13   ExpandDims{axes=[0, 1]}(Composite{...}.0)
-   1.1%    84.5%       0.004s       4.09e-06s   1000    33   ExpandDims{axis=1}(Composite{...}.1)
-   1.0%    85.5%       0.004s       3.69e-06s   1000    47   Reshape{1}((d__logp/dmu_intercept_mu), [-1])
-   0.9%    86.5%       0.003s       3.46e-06s   1000    25   Mul(AdvancedSubtensor.0, X)
-   0.9%    87.3%       0.003s       3.28e-06s   1000    11   ExpandDims{axis=0}(intercept_sigma)
-   0.8%    88.1%       0.003s       2.95e-06s   1000    15   ExpandDims{axes=[0, 1]}(Composite{...}.0)
-   ... (remaining 38 Apply instances account for 11.86%%(0.04s) of the runtime)
+  16.0%    16.0%       0.006s       5.71e-06s   1000    20   Join(0, (d__logp/dmu_slope_mu), (d__logp/dsigma_slope_mu_log__), Neg.0, Reshape{1}.0, Reshape{1}.0, Neg.0, (d__logp/dslope_sigma), Reshape{1}.0)
+  10.7%    26.7%       0.004s       3.82e-06s   1000    16   Reshape{1}(offset_slope_mu, [-1])
+   7.9%    34.6%       0.003s       2.81e-06s   1000     2   CGemv{inplace}(AllocEmpty{dtype='float64'}.0, 1.0, X, slope_sigma, 0.0)
+   7.8%    42.4%       0.003s       2.79e-06s   1000     9   CGemv{no_inplace}(slope_sigma, 1.0, X.T, Composite{(((((i2 - 0.0) / (i0 + i1)) * (i2 - 0.0)) / sqr((i0 + i1))) + (-1.0 / (i0 + i1)))}.0, -0.04)
+   7.4%    49.8%       0.003s       2.64e-06s   1000     8   Transpose{axes=[1, 0]}(X)
+   6.8%    56.6%       0.002s       2.42e-06s   1000     7   Reshape{1}((d__logp/dintercept_sigma), [-1])
+   5.7%    62.3%       0.002s       2.04e-06s   1000     3   ExpandDims{axis=0}(intercept_sigma)
+   5.4%    67.7%       0.002s       1.94e-06s   1000     5   Sum{axes=None}(Composite{(((((i2 - 0.0) / (i0 + i1)) * (i2 - 0.0)) / sqr((i0 + i1))) + (-1.0 / (i0 + i1)))}.0)
+   5.2%    72.9%       0.002s       1.86e-06s   1000    15   Reshape{1}((d__logp/dmu_intercept_mu), [-1])
+   5.0%    77.9%       0.002s       1.77e-06s   1000    13   Reshape{1}((d__logp/dsigma_intercept_mu_log__), [-1])
+   4.9%    82.8%       0.002s       1.76e-06s   1000    10   Reshape{1}(offset_intercept_mu, [-1])
+   4.1%    86.9%       0.001s       1.46e-06s   1000     4   Composite{(((((i2 - 0.0) / (i0 + i1)) * (i2 - 0.0)) / sqr((i0 + i1))) + (-1.0 / (i0 + i1)))}(ExpandDims{axis=0}.0, CGemv{inplace}.0, y)
+   2.2%    89.1%       0.001s       7.75e-07s   1000    19   Mul([-0.01], mu_slope_mu)
+   1.9%    91.0%       0.001s       6.94e-07s   1000     1   AllocEmpty{dtype='float64'}(Shape_i{0}.0)
+   1.9%    92.9%       0.001s       6.65e-07s   1000    18   Composite{(switch(gt(exp(i0), 0.0), (-(i0 - 2.0)), 0) + switch(gt(exp(i0), 0.0), -1.0, 0) + 1.0)}(sigma_slope_mu_log__)
+   1.8%    94.7%       0.001s       6.32e-07s   1000    12   Composite{(switch(gt(exp(i0), i1), (-(i0 - i4)), i3) + switch(gt(exp(i0), i1), i2, i3) + i5)}(sigma_intercept_mu_log__, 0.0, -1.0, 0, 2.0, 1.0)
+   1.5%    96.1%       0.001s       5.24e-07s   1000    17   Neg(Reshape{1}.0)
+   1.1%    97.3%       0.000s       3.99e-07s   1000    14   Mul(-0.01, mu_intercept_mu)
+   1.1%    98.4%       0.000s       3.92e-07s   1000     0   Shape_i{0}(X)
+   1.0%    99.3%       0.000s       3.47e-07s   1000    11   Neg(Reshape{1}.0)
+   ... (remaining 1 Apply instances account for 0.66%%(0.00s) of the runtime)
 
 Here are tips to potentially make your code run faster
                  (if you think of new ones, suggest them on the mailing list).
