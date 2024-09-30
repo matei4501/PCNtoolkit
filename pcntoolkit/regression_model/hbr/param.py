@@ -182,7 +182,12 @@ class Param:
         if self.linear:
             slope_samples = self.slope.get_samples(data)
             intercept_samples = self.intercept.get_samples(data)
-            result = pm.math.sum(slope_samples * data.pm_X, axis=1) + intercept_samples
+            if self.slope.random:
+                result = (
+                    pm.math.sum(slope_samples * data.pm_X, axis=1) + intercept_samples
+                )
+            else:
+                result = data.pm_X @ slope_samples + intercept_samples
             return self.apply_mapping(result)
 
         elif self.random:
