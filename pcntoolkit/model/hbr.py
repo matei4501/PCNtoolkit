@@ -450,6 +450,7 @@ class HBR:
                 init=self.configs["init"],
                 n_init=500000,
                 cores=self.configs["cores"],
+                nuts_sampler='nutpie'
             )
         self.vars_to_sample = ["y_like"]
         if self.configs["remove_datapoints_from_posterior"]:
@@ -536,7 +537,8 @@ class HBR:
                 trace=self.idata,
                 extend_inferencedata=True,
                 progressbar=True,
-                var_names=var_names,
+                var_names=var_names,                
+                nuts_sampler='nutpie'
             )
         pred_mean = (
             self.idata.posterior_predictive["y_like"].to_numpy().mean(axis=(0, 1))
@@ -569,6 +571,7 @@ class HBR:
                 init=self.configs["init"],
                 n_init=50000,
                 cores=self.configs["cores"],
+                nuts_sampler='nutpie'
             )
         return self.idata
 
@@ -594,6 +597,7 @@ class HBR:
                 extend_inferencedata=True,
                 progressbar=True,
                 var_names=self.vars_to_sample,
+                nuts_sampler='nutpie'
             )
         pred_mean = self.idata.posterior_predictive["y_like"].mean(axis=(0, 1))
         pred_var = self.idata.posterior_predictive["y_like"].var(axis=(0, 1))
@@ -618,7 +622,7 @@ class HBR:
         X = self.transform_X(X)
         modeler = self.get_modeler()
         with modeler(X, y, batch_effects, self.configs):
-            ppc = pm.sample_posterior_predictive(self.idata, progressbar=True)
+            ppc = pm.sample_posterior_predictive(self.idata, progressbar=True,nuts_sampler='nutpie')
         generated_samples = np.reshape(
             ppc.posterior_predictive["y_like"].squeeze().T, [X.shape[0] * samples, 1]
         )
@@ -650,7 +654,7 @@ class HBR:
         X = self.transform_X(X)
         modeler = self.get_modeler()
         with modeler(X, y, batch_effects, self.configs, idata):
-            self.idata = pm.sample_prior_predictive(samples=samples)
+            self.idata = pm.sample_prior_predictive(samples=samples,nuts_sampler='nutpie')
         return self.idata
 
     def get_model(self, X, y, batch_effects):
